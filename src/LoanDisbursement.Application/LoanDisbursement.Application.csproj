@@ -1,0 +1,14 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <ItemGroup>
+    <!-- Needed for DbSet and async query methods such as ToListAsync -->
+    <PackageReference Include="Microsoft.EntityFrameworkCore" Version="10.0.*" />
+    <!-- Needed for registering handlers with AddScoped -->
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="10.0.*" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\LoanDisbursement.Domain\LoanDisbursement.Domain.csproj" />
+  </ItemGroup>
+
+</Project>

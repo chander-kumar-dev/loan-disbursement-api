@@ -1,0 +1,17 @@
+# Optional: SQL Server in Docker, for machines without SQL Server LocalDB (macOS, Linux, or Windows without Visual Studio).
+# Start it with:  docker compose up -d
+# Then run the API with the connection string shown in the README.
+# The password below is for local development only.
+services:
+  sqlserver:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    environment:
+      ACCEPT_EULA: "Y"
+      MSSQL_SA_PASSWORD: "Dev_Password_123!"
+    ports:
+      - "1433:1433"
+    volumes:
+      - sqlserver-data:/var/opt/mssql
+
+volumes:
+  sqlserver-data:

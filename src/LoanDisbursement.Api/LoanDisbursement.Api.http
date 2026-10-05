@@ -1,0 +1,39 @@
+# Send these requests from VS Code (REST Client extension) or Visual Studio.
+# Run them top to bottom. Replace {{loanId}} with the id returned by the first request.
+
+@baseUrl = http://localhost:5080
+@loanId = 00000000-0000-0000-0000-000000000000
+
+### Create a loan
+POST {{baseUrl}}/api/loans
+Content-Type: application/json
+
+{
+  "applicantName": "Ayesha Khan",
+  "accountNumber": "PK36SCBL0000001123456702",
+  "amount": 250000,
+  "tenureMonths": 12
+}
+
+### Get the loan
+GET {{baseUrl}}/api/loans/{{loanId}}
+
+### List approved loans
+GET {{baseUrl}}/api/loans?status=Approved
+
+### Approve
+POST {{baseUrl}}/api/loans/{{loanId}}/approve
+
+### Disburse
+POST {{baseUrl}}/api/loans/{{loanId}}/disburse
+
+### Disburse again: returns 409 Conflict, because the loan is already disbursed
+POST {{baseUrl}}/api/loans/{{loanId}}/disburse
+
+### Reject (only works on a Pending loan)
+POST {{baseUrl}}/api/loans/{{loanId}}/reject
+Content-Type: application/json
+
+{
+  "reason": "Insufficient income"
+}
