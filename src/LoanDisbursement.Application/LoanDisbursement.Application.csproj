@@ -1,10 +1,12 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <ItemGroup>
-    <!-- Needed for DbSet and async query methods such as ToListAsync -->
-    <PackageReference Include="Microsoft.EntityFrameworkCore" Version="10.0.*" />
-    <!-- Needed for registering handlers with AddScoped -->
-    <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="10.0.*" />
+    <!--
+      Needed for DbSet and async query methods such as ToListAsync.
+      Also brings Microsoft.Extensions.DependencyInjection.Abstractions (used for AddScoped)
+      at the version EF Core was built against, so it is not pinned separately.
+    -->
+    <PackageReference Include="Microsoft.EntityFrameworkCore" />
   </ItemGroup>
 
   <ItemGroup>

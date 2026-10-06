@@ -142,6 +142,7 @@ CI runs restore, build and test on every push and pull request via GitHub Action
 - **SQLite instead of the EF Core InMemory provider for tests.** InMemory is not relational and hides problems such as constraint violations.
 - **`TimeProvider` for the current time.** Tests use a fixed clock, so timestamps are deterministic.
 - **Status stored as text.** The `Loans` table shows `Approved` instead of `1`, which is easier to read when investigating production data.
+- **Central Package Management.** Every NuGet version lives in [`Directory.Packages.props`](Directory.Packages.props) as an exact version. Builds are reproducible, and Dependabot proposes each upgrade as a reviewable pull request.
 
 ## Production readiness: known gaps
 
