@@ -22,7 +22,9 @@ public class LoanConfiguration : IEntityTypeConfiguration<Loan>
         // Store the status as readable text ("Approved") instead of a number
         builder.Property(l => l.Status).HasConversion<string>().HasMaxLength(20);
 
-        // Speeds up "list loans by status", the most common query
-        builder.HasIndex(l => l.Status);
+        // Support keyset pagination (newest first, Id as tie-breaker), with and without a status filter.
+        // SQL Server can read these ascending indexes backwards, so no descending index is needed.
+        builder.HasIndex(l => new { l.Status, l.CreatedAtUtc, l.Id });
+        builder.HasIndex(l => new { l.CreatedAtUtc, l.Id });
     }
 }

@@ -18,8 +18,11 @@ Content-Type: application/json
 ### Get the loan
 GET {{baseUrl}}/api/loans/{{loanId}}
 
-### List approved loans
-GET {{baseUrl}}/api/loans?status=Approved
+### List approved loans (first page, newest first)
+GET {{baseUrl}}/api/loans?status=Approved&pageSize=20
+
+### Next page: paste the nextCursor value from the previous response
+GET {{baseUrl}}/api/loans?status=Approved&pageSize=20&cursor=PASTE_NEXT_CURSOR_HERE
 
 ### Approve
 POST {{baseUrl}}/api/loans/{{loanId}}/approve

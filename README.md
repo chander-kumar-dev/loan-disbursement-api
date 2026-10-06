@@ -57,13 +57,26 @@ Commands load the entity, call a domain method, and save. Queries use `AsNoTrack
 |---|---|---|
 | `POST` | `/api/loans` | Create a loan (status `Pending`) |
 | `GET` | `/api/loans/{id}` | Get one loan |
-| `GET` | `/api/loans?status=Approved` | List loans, newest first, optionally filtered by status |
+| `GET` | `/api/loans?status=Approved&pageSize=20&cursor=...` | List loans newest first, one page at a time, optionally filtered by status |
 | `POST` | `/api/loans/{id}/approve` | Approve a pending loan |
 | `POST` | `/api/loans/{id}/reject` | Reject a pending loan with a reason |
 | `POST` | `/api/loans/{id}/disburse` | Disburse an approved loan |
 | `GET` | `/health` | Health check |
 
 Errors use RFC 7807 problem details: `400` for invalid input, `404` for an unknown loan, `409` for a business-rule violation.
+
+### Paging
+
+`GET /api/loans` returns one page at a time using keyset (cursor) pagination:
+
+```json
+{
+  "items": [ { "id": "…", "status": "Approved", "…": "…" } ],
+  "nextCursor": "NjM5MDAwMDAwMDAwMDAwMDAwfDNm…"
+}
+```
+
+`pageSize` is 1 to 100 (default 20). Pass `nextCursor` back as `cursor` to get the next page; it is `null` on the last page. Treat the cursor as opaque. Unlike `Skip/Take`, a page costs the same however deep you go, and loans created while you page do not shift the pages you have not read yet.
 
 Validation limits: amount 1 to 5,000,000; tenure 1 to 60 months; applicant name up to 200 characters; account number up to 34 characters (IBAN length).
 
@@ -142,6 +155,7 @@ CI runs restore, build and test on every push and pull request via GitHub Action
 - **SQLite instead of the EF Core InMemory provider for tests.** InMemory is not relational and hides problems such as constraint violations.
 - **`TimeProvider` for the current time.** Tests use a fixed clock, so timestamps are deterministic.
 - **Status stored as text.** The `Loans` table shows `Approved` instead of `1`, which is easier to read when investigating production data.
+- **Keyset pagination.** The list is ordered by `(CreatedAtUtc, Id)`, both descending, with `Id` breaking ties between loans created at the same instant. Two composite indexes, `(Status, CreatedAtUtc, Id)` and `(CreatedAtUtc, Id)`, serve the filtered and unfiltered lists.
 - **Central Package Management.** Every NuGet version lives in [`Directory.Packages.props`](Directory.Packages.props) as an exact version. Builds are reproducible, and Dependabot proposes each upgrade as a reviewable pull request.
 
 ## Production readiness: known gaps

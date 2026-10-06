@@ -1,4 +1,5 @@
 using LoanDisbursement.Application.Abstractions;
+using LoanDisbursement.Application.Common;
 using LoanDisbursement.Application.Loans;
 using LoanDisbursement.Application.Loans.Commands;
 using LoanDisbursement.Application.Loans.Queries;
@@ -20,7 +21,7 @@ public static class DependencyInjection
 
         // Queries (read side)
         services.AddScoped<IQueryHandler<GetLoanByIdQuery, LoanDto>, GetLoanByIdHandler>();
-        services.AddScoped<IQueryHandler<GetLoansQuery, IReadOnlyList<LoanDto>>, GetLoansHandler>();
+        services.AddScoped<IQueryHandler<GetLoansQuery, PagedResult<LoanDto>>, GetLoansHandler>();
 
         return services;
     }

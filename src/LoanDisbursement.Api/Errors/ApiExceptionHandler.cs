@@ -22,6 +22,7 @@ public class ApiExceptionHandler : IExceptionHandler
     {
         (int status, string title)? mapped = exception switch
         {
+            RequestValidationException => (StatusCodes.Status400BadRequest, "Invalid request"),
             NotFoundException => (StatusCodes.Status404NotFound, "Not found"),
             DomainException => (StatusCodes.Status409Conflict, "Business rule violated"),
             _ => null

@@ -1,5 +1,6 @@
 using LoanDisbursement.Api.Contracts;
 using LoanDisbursement.Application.Abstractions;
+using LoanDisbursement.Application.Common;
 using LoanDisbursement.Application.Loans;
 using LoanDisbursement.Application.Loans.Commands;
 using LoanDisbursement.Application.Loans.Queries;
@@ -40,15 +41,22 @@ public class LoansController : ControllerBase
         return await handler.HandleAsync(new GetLoanByIdQuery(id), cancellationToken);
     }
 
+    /// <summary>
+    /// Lists loans newest first, one page at a time. To get the next page, pass the
+    /// <c>nextCursor</c> from the response as <c>cursor</c>. It is null on the last page.
+    /// </summary>
     [HttpGet]
-    [ProducesResponseType<IReadOnlyList<LoanDto>>(StatusCodes.Status200OK)]
-    public async Task<ActionResult<IReadOnlyList<LoanDto>>> GetAll(
-        [FromQuery] LoanStatus? status,
-        [FromServices] IQueryHandler<GetLoansQuery, IReadOnlyList<LoanDto>> handler,
-        CancellationToken cancellationToken)
+    [ProducesResponseType<PagedResult<LoanDto>>(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    public async Task<ActionResult<PagedResult<LoanDto>>> GetAll(
+        [FromServices] IQueryHandler<GetLoansQuery, PagedResult<LoanDto>> handler,
+        [FromQuery] LoanStatus? status = null,
+        [FromQuery] int pageSize = GetLoansQuery.DefaultPageSize,
+        [FromQuery] string? cursor = null,
+        CancellationToken cancellationToken = default)
     {
-        var loans = await handler.HandleAsync(new GetLoansQuery(status), cancellationToken);
-        return Ok(loans);
+        var page = await handler.HandleAsync(new GetLoansQuery(status, pageSize, cursor), cancellationToken);
+        return Ok(page);
     }
 
     [HttpPost("{id:guid}/approve")]
