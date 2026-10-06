@@ -135,7 +135,7 @@ public class LoanHandlerTests : IDisposable
         var approved = await handler.HandleAsync(new GetLoansQuery(LoanStatus.Approved), _ct);
         var all = await handler.HandleAsync(new GetLoansQuery(null), _ct);
 
-        Assert.Equal(new[] { second }, approved.Select(l => l.Id));
-        Assert.Equal(new[] { third, second, first }, all.Select(l => l.Id));
+        Assert.Equal(new[] { second }, approved.Items.Select(l => l.Id));
+        Assert.Equal(new[] { third, second, first }, all.Items.Select(l => l.Id));
     }
 }
