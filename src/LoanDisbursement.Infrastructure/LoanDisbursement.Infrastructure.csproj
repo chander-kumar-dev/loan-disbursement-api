@@ -6,6 +6,8 @@
       at the version EF Core was built against, so it is not pinned separately.
     -->
     <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" />
+    <!-- Readiness check that confirms the database is reachable -->
+    <PackageReference Include="Microsoft.Extensions.Diagnostics.HealthChecks.EntityFrameworkCore" />
   </ItemGroup>
 
   <ItemGroup>

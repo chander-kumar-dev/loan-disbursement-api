@@ -2,6 +2,7 @@ using System.Text.Json.Serialization;
 using LoanDisbursement.Api.Errors;
 using LoanDisbursement.Application;
 using LoanDisbursement.Infrastructure;
+using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -56,7 +57,19 @@ else
 }
 
 app.MapControllers();
-app.MapHealthChecks("/health");
+
+// Liveness: the process is up. Runs no dependency checks, so a database outage
+// does not make the orchestrator restart healthy instances.
+app.MapHealthChecks("/health/live", new HealthCheckOptions { Predicate = _ => false });
+
+// Readiness: dependencies are reachable. A load balancer should stop sending traffic while this fails.
+app.MapHealthChecks("/health/ready", new HealthCheckOptions
+{
+    Predicate = check => check.Tags.Contains(HealthCheckTags.Ready)
+});
+
+// Kept for existing callers; behaves like /health/live.
+app.MapHealthChecks("/health", new HealthCheckOptions { Predicate = _ => false });
 
 app.Run();
 

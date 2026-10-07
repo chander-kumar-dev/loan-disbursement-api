@@ -61,7 +61,9 @@ Commands load the entity, call a domain method, and save. Queries use `AsNoTrack
 | `POST` | `/api/loans/{id}/approve` | Approve a pending loan |
 | `POST` | `/api/loans/{id}/reject` | Reject a pending loan with a reason |
 | `POST` | `/api/loans/{id}/disburse` | Disburse an approved loan |
-| `GET` | `/health` | Health check |
+| `GET` | `/health/live` | Liveness: the process is running (no dependency checks) |
+| `GET` | `/health/ready` | Readiness: the database is reachable; returns `503` when it is not |
+| `GET` | `/health` | Same as `/health/live`, kept for existing callers |
 
 Errors use RFC 7807 problem details: `400` for invalid input, `404` for an unknown loan, `409` for a business-rule violation.
 
@@ -156,6 +158,7 @@ CI runs restore, build and test on every push and pull request via GitHub Action
 - **`TimeProvider` for the current time.** Tests use a fixed clock, so timestamps are deterministic.
 - **Status stored as text.** The `Loans` table shows `Approved` instead of `1`, which is easier to read when investigating production data.
 - **Keyset pagination.** The list is ordered by `(CreatedAtUtc, Id)`, both descending, with `Id` breaking ties between loans created at the same instant. Two composite indexes, `(Status, CreatedAtUtc, Id)` and `(CreatedAtUtc, Id)`, serve the filtered and unfiltered lists.
+- **Separate liveness and readiness.** A database outage fails `/health/ready`, so a load balancer stops routing traffic, but leaves `/health/live` healthy, so an orchestrator does not restart instances that would only fail again.
 - **Central Package Management.** Every NuGet version lives in [`Directory.Packages.props`](Directory.Packages.props) as an exact version. Builds are reproducible, and Dependabot proposes each upgrade as a reviewable pull request.
 
 ## Production readiness: known gaps

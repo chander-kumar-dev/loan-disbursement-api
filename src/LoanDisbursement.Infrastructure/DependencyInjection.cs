@@ -18,6 +18,10 @@ public static class DependencyInjection
         // Handlers ask for IAppDbContext; give them the same AppDbContext instance
         services.AddScoped<IAppDbContext>(provider => provider.GetRequiredService<AppDbContext>());
 
+        // Readiness: the API can only serve requests if it can reach its database.
+        services.AddHealthChecks()
+            .AddDbContextCheck<AppDbContext>(name: "database", tags: [HealthCheckTags.Ready]);
+
         return services;
     }
 }
