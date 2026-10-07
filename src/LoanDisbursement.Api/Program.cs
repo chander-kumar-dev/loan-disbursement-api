@@ -1,4 +1,5 @@
 using System.Text.Json.Serialization;
+using LoanDisbursement.Api.Configuration;
 using LoanDisbursement.Api.Errors;
 using LoanDisbursement.Application;
 using LoanDisbursement.Infrastructure;
@@ -15,6 +16,7 @@ builder.Services.AddProblemDetails();
 builder.Services.AddExceptionHandler<ApiExceptionHandler>();
 builder.Services.AddHealthChecks();
 
+builder.Services.AddLoanProduct(builder.Configuration);
 builder.Services.AddApplication();
 builder.Services.AddInfrastructure(builder.Configuration);
 

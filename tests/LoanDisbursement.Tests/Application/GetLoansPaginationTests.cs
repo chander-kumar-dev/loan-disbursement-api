@@ -21,8 +21,8 @@ public class GetLoansPaginationTests : IDisposable
         for (var i = 0; i < count; i++)
         {
             using var db = _database.CreateContext();
-            var loan = await new CreateLoanHandler(db, _clock)
-                .HandleAsync(new CreateLoanCommand($"Applicant {i}", "PK36SCBL0000001123456702", 10_000m, 12), _ct);
+            var loan = await new CreateLoanHandler(db, _clock, TestData.Limits)
+                .HandleAsync(new CreateLoanCommand($"Applicant {i}", TestData.ValidIban, 10_000m, 12), _ct);
             ids.Add(loan.Id);
             _clock.Advance(gap);
         }

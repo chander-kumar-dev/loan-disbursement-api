@@ -18,8 +18,8 @@ public class LoanHandlerTests : IDisposable
     private async Task<Guid> CreateLoanAsync(string applicant = "Ayesha Khan")
     {
         using var db = _database.CreateContext();
-        var handler = new CreateLoanHandler(db, _clock);
-        var loan = await handler.HandleAsync(new CreateLoanCommand(applicant, "PK36SCBL0000001123456702", 250_000m, 12), _ct);
+        var handler = new CreateLoanHandler(db, _clock, TestData.Limits);
+        var loan = await handler.HandleAsync(new CreateLoanCommand(applicant, TestData.ValidIban, 250_000m, 12), _ct);
         return loan.Id;
     }
 

@@ -1,5 +1,6 @@
 using LoanDisbursement.Domain;
 using LoanDisbursement.Domain.Loans;
+using LoanDisbursement.Tests.TestSupport;
 
 namespace LoanDisbursement.Tests.Domain;
 
@@ -7,7 +8,7 @@ public class LoanTests
 {
     private static readonly DateTime Now = new(2026, 10, 1, 9, 0, 0, DateTimeKind.Utc);
 
-    private static Loan NewLoan() => Loan.Create("Ayesha Khan", "PK36SCBL0000001123456702", 250_000m, 12, Now);
+    private static Loan NewLoan() => Loan.Create("Ayesha Khan", TestData.ValidIban, 250_000m, 12, TestData.Limits, Now);
 
     [Fact]
     public void Create_WithValidData_StartsAsPending()
@@ -23,7 +24,7 @@ public class LoanTests
     [Fact]
     public void Create_TrimsApplicantName()
     {
-        var loan = Loan.Create("  Ayesha Khan  ", "PK36", 1_000m, 6, Now);
+        var loan = Loan.Create("  Ayesha Khan  ", "PK36", 1_000m, 6, TestData.Limits, Now);
 
         Assert.Equal("Ayesha Khan", loan.ApplicantName);
     }
@@ -32,25 +33,38 @@ public class LoanTests
     [InlineData(0)]
     [InlineData(-1)]
     [InlineData(5_000_001)]
-    public void Create_WithInvalidAmount_Throws(int amount)
+    public void Create_WithInvalidAmount_ThrowsValidationError(int amount)
     {
-        Assert.Throws<DomainException>(() => Loan.Create("Ayesha Khan", "PK36", amount, 12, Now));
+        Assert.Throws<DomainValidationException>(() => Loan.Create("Ayesha Khan", "PK36", amount, 12, TestData.Limits, Now));
     }
 
     [Theory]
     [InlineData(0)]
     [InlineData(61)]
-    public void Create_WithInvalidTenure_Throws(int tenureMonths)
+    public void Create_WithInvalidTenure_ThrowsValidationError(int tenureMonths)
     {
-        Assert.Throws<DomainException>(() => Loan.Create("Ayesha Khan", "PK36", 1_000m, tenureMonths, Now));
+        Assert.Throws<DomainValidationException>(() => Loan.Create("Ayesha Khan", "PK36", 1_000m, tenureMonths, TestData.Limits, Now));
     }
 
     [Theory]
     [InlineData("")]
     [InlineData("   ")]
-    public void Create_WithoutApplicantName_Throws(string name)
+    public void Create_WithoutApplicantName_ThrowsValidationError(string name)
     {
-        Assert.Throws<DomainException>(() => Loan.Create(name, "PK36", 1_000m, 12, Now));
+        Assert.Throws<DomainValidationException>(() => Loan.Create(name, "PK36", 1_000m, 12, TestData.Limits, Now));
+    }
+
+    [Fact]
+    public void Create_UsesTheLimitsItIsGiven_NotHardCodedValues()
+    {
+        var smallProduct = new LoanLimits(minAmount: 500m, maxAmount: 2_000m, minTenureMonths: 3, maxTenureMonths: 6);
+
+        Assert.Throws<DomainValidationException>(() => Loan.Create("Ayesha Khan", "PK36", 2_001m, 6, smallProduct, Now));
+        Assert.Throws<DomainValidationException>(() => Loan.Create("Ayesha Khan", "PK36", 499m, 6, smallProduct, Now));
+        Assert.Throws<DomainValidationException>(() => Loan.Create("Ayesha Khan", "PK36", 1_000m, 7, smallProduct, Now));
+
+        var loan = Loan.Create("Ayesha Khan", "PK36", 2_000m, 3, smallProduct, Now);
+        Assert.Equal(2_000m, loan.Amount);
     }
 
     [Fact]
@@ -125,10 +139,10 @@ public class LoanTests
     }
 
     [Fact]
-    public void Reject_WithoutReason_Throws()
+    public void Reject_WithoutReason_ThrowsValidationError()
     {
         var loan = NewLoan();
 
-        Assert.Throws<DomainException>(() => loan.Reject(" ", Now));
+        Assert.Throws<DomainValidationException>(() => loan.Reject(" ", Now));
     }
 }

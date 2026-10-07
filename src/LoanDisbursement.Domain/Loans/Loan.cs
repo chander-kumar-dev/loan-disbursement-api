@@ -6,9 +6,6 @@ namespace LoanDisbursement.Domain.Loans;
 /// </summary>
 public class Loan
 {
-    public const decimal MaxAmount = 5_000_000m;
-    public const int MaxTenureMonths = 60;
-
     public Guid Id { get; private set; }
     public string ApplicantName { get; private set; } = string.Empty;
     public string AccountNumber { get; private set; } = string.Empty;
@@ -26,23 +23,31 @@ public class Loan
     {
     }
 
-    public static Loan Create(string applicantName, string accountNumber, decimal amount, int tenureMonths, DateTime nowUtc)
+    public static Loan Create(
+        string applicantName,
+        string accountNumber,
+        decimal amount,
+        int tenureMonths,
+        LoanLimits limits,
+        DateTime nowUtc)
     {
+        ArgumentNullException.ThrowIfNull(limits);
+
         if (string.IsNullOrWhiteSpace(applicantName))
         {
-            throw new DomainException("Applicant name is required.");
+            throw new DomainValidationException("Applicant name is required.");
         }
         if (string.IsNullOrWhiteSpace(accountNumber))
         {
-            throw new DomainException("Account number is required.");
+            throw new DomainValidationException("Account number is required.");
         }
-        if (amount <= 0 || amount > MaxAmount)
+        if (amount < limits.MinAmount || amount > limits.MaxAmount)
         {
-            throw new DomainException($"Amount must be greater than 0 and at most {MaxAmount}.");
+            throw new DomainValidationException($"Amount must be between {limits.MinAmount} and {limits.MaxAmount}.");
         }
-        if (tenureMonths < 1 || tenureMonths > MaxTenureMonths)
+        if (tenureMonths < limits.MinTenureMonths || tenureMonths > limits.MaxTenureMonths)
         {
-            throw new DomainException($"Tenure must be between 1 and {MaxTenureMonths} months.");
+            throw new DomainValidationException($"Tenure must be between {limits.MinTenureMonths} and {limits.MaxTenureMonths} months.");
         }
 
         return new Loan
@@ -68,7 +73,7 @@ public class Loan
     {
         if (string.IsNullOrWhiteSpace(reason))
         {
-            throw new DomainException("A rejection reason is required.");
+            throw new DomainValidationException("A rejection reason is required.");
         }
 
         EnsureStatus(LoanStatus.Pending, "reject");

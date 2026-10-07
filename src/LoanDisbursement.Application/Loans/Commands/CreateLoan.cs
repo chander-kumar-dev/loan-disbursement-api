@@ -9,11 +9,13 @@ public class CreateLoanHandler : ICommandHandler<CreateLoanCommand, LoanDto>
 {
     private readonly IAppDbContext _db;
     private readonly TimeProvider _clock;
+    private readonly LoanLimits _limits;
 
-    public CreateLoanHandler(IAppDbContext db, TimeProvider clock)
+    public CreateLoanHandler(IAppDbContext db, TimeProvider clock, LoanLimits limits)
     {
         _db = db;
         _clock = clock;
+        _limits = limits;
     }
 
     public async Task<LoanDto> HandleAsync(CreateLoanCommand command, CancellationToken cancellationToken)
@@ -23,6 +25,7 @@ public class CreateLoanHandler : ICommandHandler<CreateLoanCommand, LoanDto>
             command.AccountNumber,
             command.Amount,
             command.TenureMonths,
+            _limits,
             _clock.GetUtcNow().UtcDateTime);
 
         _db.Loans.Add(loan);
