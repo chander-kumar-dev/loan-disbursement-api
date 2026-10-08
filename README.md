@@ -22,6 +22,8 @@ stateDiagram-v2
 
 Every state change goes through a method on the `Loan` entity, which checks the current status first. Disbursing a pending loan, approving twice, or disbursing the same loan twice returns `409 Conflict`.
 
+The status check alone cannot stop two requests that arrive at the same moment: both could load the loan while it is still `Approved`. An optimistic concurrency token on the `Loans` table closes that gap. The second save finds the row has changed and fails with `409 Concurrent update`, so a loan is disbursed at most once.
+
 ## Architecture
 
 ```text
@@ -162,6 +164,7 @@ CI runs restore, build and test on every push and pull request via GitHub Action
 - **Limits defined once, in configuration.** `LoanProduct` settings are validated at startup (`ValidateOnStart`) and passed to the Domain as a `LoanLimits` value. The request contract checks shape only, so the API and the Domain can never disagree about a limit.
 - **Two kinds of rule violation.** `DomainValidationException` (bad input, `400`) derives from `DomainException` (illegal state transition, `409`), so clients can tell "fix your request" from "this loan can't do that now".
 - **IBAN as a value object.** `Iban` validates the checksum once, at the edge of the Domain, so a mistyped account number fails with a `400` here instead of as a rejected payment at the core banking system. Rows read from the database skip re-validation, so tightening the rules later cannot make existing loans unreadable.
+- **App-managed concurrency token.** `Loans` carries a `Version` (a shadow property, so the Domain stays free of persistence details) that `AppDbContext` renews on every save. SQL Server's `rowversion` would do this automatically, but SQLite, used by the tests, has no equivalent; one mechanism that works on both keeps the tests faithful to production.
 - **Central Package Management.** Every NuGet version lives in [`Directory.Packages.props`](Directory.Packages.props) as an exact version. Builds are reproducible, and Dependabot proposes each upgrade as a reviewable pull request.
 
 ## Production readiness: known gaps
@@ -171,7 +174,7 @@ This is a reference implementation of the lifecycle and its rules. A real lendin
 | Gap | Risk in production | Planned approach |
 |---|---|---|
 | No idempotency key on disburse | A client retry after a timeout could trigger a second payout request to the core banking system | `Idempotency-Key` header stored with a unique index; replay returns the original response |
-| No optimistic concurrency | Two simultaneous disburse requests can both read `Approved` | `rowversion` concurrency token; the loser receives `409` |
+| ~~No optimistic concurrency~~ **Done** | Two simultaneous disburse requests could both read `Approved` | `Version` concurrency token on `Loans`; the losing request receives `409 Concurrent update` |
 | Disbursement is a status change only | No real funds movement or reconciliation | Core banking adapter with timeouts, retries and circuit breaker; transactional outbox; daily reconciliation job |
 | No authentication or maker-checker | Anyone can approve, including the loan's creator | JWT auth, role-based policies, and a rule that approver ≠ creator |
 | Account number returned in full | PII exposure in responses and logs | Mask in DTOs (`****6702`), encrypt at rest |
@@ -181,7 +184,7 @@ This is a reference implementation of the lifecycle and its rules. A real lendin
 
 - [ ] Simulated core banking integration with timeouts, retries and an outbox
 - [ ] Idempotency keys on disbursement
-- [ ] Optimistic concurrency on the `Loans` table
+- [x] Optimistic concurrency on the `Loans` table
 - [ ] API integration tests with `WebApplicationFactory` and Testcontainers
 - [ ] Authentication, role-based approval, maker-checker
 - [ ] Structured logging and OpenTelemetry tracing
