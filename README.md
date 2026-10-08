@@ -80,7 +80,7 @@ Errors use RFC 7807 problem details: `400` for invalid input (including amounts 
 
 `pageSize` is 1 to 100 (default 20). Pass `nextCursor` back as `cursor` to get the next page; it is `null` on the last page. Treat the cursor as opaque. Unlike `Skip/Take`, a page costs the same however deep you go, and loans created while you page do not shift the pages you have not read yet.
 
-Loan limits come from the `LoanProduct` section of `appsettings.json` (defaults: amount 1 to 5,000,000; tenure 1 to 60 months) and are enforced by the Domain. The API refuses to start if the section is missing or inconsistent. Applicant name is up to 200 characters; account number up to 34 characters (IBAN length).
+Loan limits come from the `LoanProduct` section of `appsettings.json` (defaults: amount 1 to 5,000,000; tenure 1 to 60 months) and are enforced by the Domain. The API refuses to start if the section is missing or inconsistent. Applicant name is up to 200 characters. The account number must be a valid IBAN: it is checked with the ISO 13616 mod-97 checksum, may be sent with spaces, and is stored without them in upper case.
 
 Example requests are in [`LoanDisbursement.Api.http`](src/LoanDisbursement.Api/LoanDisbursement.Api.http) (VS Code REST Client or Visual Studio).
 
@@ -161,6 +161,7 @@ CI runs restore, build and test on every push and pull request via GitHub Action
 - **Separate liveness and readiness.** A database outage fails `/health/ready`, so a load balancer stops routing traffic, but leaves `/health/live` healthy, so an orchestrator does not restart instances that would only fail again.
 - **Limits defined once, in configuration.** `LoanProduct` settings are validated at startup (`ValidateOnStart`) and passed to the Domain as a `LoanLimits` value. The request contract checks shape only, so the API and the Domain can never disagree about a limit.
 - **Two kinds of rule violation.** `DomainValidationException` (bad input, `400`) derives from `DomainException` (illegal state transition, `409`), so clients can tell "fix your request" from "this loan can't do that now".
+- **IBAN as a value object.** `Iban` validates the checksum once, at the edge of the Domain, so a mistyped account number fails with a `400` here instead of as a rejected payment at the core banking system. Rows read from the database skip re-validation, so tightening the rules later cannot make existing loans unreadable.
 - **Central Package Management.** Every NuGet version lives in [`Directory.Packages.props`](Directory.Packages.props) as an exact version. Builds are reproducible, and Dependabot proposes each upgrade as a reviewable pull request.
 
 ## Production readiness: known gaps

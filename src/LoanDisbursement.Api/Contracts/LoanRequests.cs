@@ -8,7 +8,8 @@ namespace LoanDisbursement.Api.Contracts;
 
 public record CreateLoanRequest(
     [Required, StringLength(200)] string ApplicantName,
-    [Required, StringLength(34)] string AccountNumber,
+    // 42 = a 34-character IBAN written in groups of four with spaces; the Domain removes the spaces.
+    [Required, StringLength(42)] string AccountNumber,
     decimal Amount,
     int TenureMonths);
 

@@ -34,6 +34,7 @@ public class LoanHandlerTests : IDisposable
         Assert.Equal(LoanStatus.Pending, loan.Status);
         Assert.Equal("Ayesha Khan", loan.ApplicantName);
         Assert.Equal(250_000m, loan.Amount);
+        Assert.Equal(TestData.ValidIban, loan.AccountNumber);
         Assert.Equal(_clock.GetUtcNow().UtcDateTime, loan.CreatedAtUtc);
     }
 

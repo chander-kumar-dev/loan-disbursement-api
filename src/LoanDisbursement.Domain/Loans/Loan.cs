@@ -8,7 +8,7 @@ public class Loan
 {
     public Guid Id { get; private set; }
     public string ApplicantName { get; private set; } = string.Empty;
-    public string AccountNumber { get; private set; } = string.Empty;
+    public Iban AccountNumber { get; private set; } = null!;
     public decimal Amount { get; private set; }
     public int TenureMonths { get; private set; }
     public LoanStatus Status { get; private set; }
@@ -37,10 +37,9 @@ public class Loan
         {
             throw new DomainValidationException("Applicant name is required.");
         }
-        if (string.IsNullOrWhiteSpace(accountNumber))
-        {
-            throw new DomainValidationException("Account number is required.");
-        }
+
+        var iban = Iban.Create(accountNumber);
+
         if (amount < limits.MinAmount || amount > limits.MaxAmount)
         {
             throw new DomainValidationException($"Amount must be between {limits.MinAmount} and {limits.MaxAmount}.");
@@ -54,7 +53,7 @@ public class Loan
         {
             Id = Guid.NewGuid(),
             ApplicantName = applicantName.Trim(),
-            AccountNumber = accountNumber.Trim(),
+            AccountNumber = iban,
             Amount = amount,
             TenureMonths = tenureMonths,
             Status = LoanStatus.Pending,

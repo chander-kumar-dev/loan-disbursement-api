@@ -15,7 +15,11 @@ public class LoanConfiguration : IEntityTypeConfiguration<Loan>
         builder.HasKey(l => l.Id);
 
         builder.Property(l => l.ApplicantName).HasMaxLength(200).IsRequired();
-        builder.Property(l => l.AccountNumber).HasMaxLength(34).IsRequired();
+        // Stored as plain text; same column as before, so no migration is needed.
+        builder.Property(l => l.AccountNumber)
+            .HasConversion(iban => iban.Value, value => Iban.FromTrusted(value))
+            .HasMaxLength(34)
+            .IsRequired();
         builder.Property(l => l.Amount).HasPrecision(18, 2);
         builder.Property(l => l.RejectionReason).HasMaxLength(500);
 

@@ -21,7 +21,7 @@ public record LoanDto(
     public static LoanDto FromLoan(Loan loan) => new(
         loan.Id,
         loan.ApplicantName,
-        loan.AccountNumber,
+        loan.AccountNumber.Value,
         loan.Amount,
         loan.TenureMonths,
         loan.Status,
