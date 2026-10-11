@@ -34,6 +34,7 @@ src/
   LoanDisbursement.Api             Controllers, validation, error handling, startup.
 tests/
   LoanDisbursement.Tests           xUnit tests for domain rules and handlers.
+  LoanDisbursement.Api.Tests       HTTP-level tests of the running API, plus architecture rules.
 ```
 
 Dependencies point inward: `Api → Application → Domain`, and `Infrastructure → Application`. The Domain knows nothing about databases or HTTP.
@@ -147,7 +148,9 @@ dotnet test
 ```
 
 - **Domain tests** cover every status transition and validation rule, including that a loan can never be disbursed twice.
-- **Handler tests** run against an in-memory **SQLite** database, so they execute real SQL. Each step uses a fresh `DbContext`, which proves data was actually persisted rather than cached by EF Core.
+- **Handler tests** run against an in-memory **SQLite** database, so they execute real SQL. Each step uses a fresh `DbContext`, which proves data was actually persisted rather than cached by EF Core. They include a deterministic reproduction of the double-disbursement race.
+- **API tests** host the real API in memory with `WebApplicationFactory` and call it over HTTP: routing, model binding, validation, status codes and the problem-details format.
+- **Architecture tests** (NetArchTest) fail the build if a layer takes a forbidden dependency, for example the Domain referencing EF Core or a controller referencing Infrastructure.
 
 CI runs restore, build and test on every push and pull request via GitHub Actions.
 
@@ -185,7 +188,9 @@ This is a reference implementation of the lifecycle and its rules. A real lendin
 - [ ] Simulated core banking integration with timeouts, retries and an outbox
 - [ ] Idempotency keys on disbursement
 - [x] Optimistic concurrency on the `Loans` table
-- [ ] API integration tests with `WebApplicationFactory` and Testcontainers
+- [x] API integration tests with `WebApplicationFactory`
+- [x] Architecture tests for the dependency rules
+- [ ] SQL Server integration tests with Testcontainers
 - [ ] Authentication, role-based approval, maker-checker
 - [ ] Structured logging and OpenTelemetry tracing
 
